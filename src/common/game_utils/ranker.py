@@ -1,171 +1,162 @@
 from typing import List
 
+from src.common.enums.hand_types import HandType as HT
 from src.common.models.game import OrganizedHand
 from src.common.enums.card import Card
 
 """
-Assumes max 7 cards
+Organize cards into best hand
+Assume 5 - 7 card hands
 """
 def organize(cards: List[Card]) -> OrganizedHand:
+    organized_hand = OrganizedHand()
+    organized_hand.cards = cards
+
     counts = [0]*13
     flushes = [0]*4
     for i in range(len(cards)):
-        counts[cards[i].value%13] += 1
+        counts[cards[i].value % 13] += 1
         flushes[cards[i].value//13] += 1
 
-    cards.sort(key=lambda x: x.value % 13)
-    card_ints = [i.value for i in cards]
+    # NOTE cards is sorted BIGGEST CARD FIRST
+    cards.sort(key=lambda x: x.value % 13, reverse=True)
 
-    org_hand = OrganizedHand(cards,[],[],[],[])
-
-    # organize cards
-    for i in range(len(counts)):
-        if counts[i] == 4:
-            org_hand.quads.append(i)
-            break
-        elif counts[i] == 3:
-            if len(org_hand.trips) == 1:
-                org_hand.pairs.append(org_hand.trips[0])
-                org_hand.trips.append(i)
+    ### Assemble top pair, 2 pair, trips, quads, and full house ###
+    ind = 0
+    while ind < len(cards):
+        card = cards[ind]
+        card_val = card.value % 13
+        # Found quads
+        if counts[card_val] == 4:
+            organized_hand.primary = card_val
+            organized_hand.hand_type = HT.QUADS
+            ind += 3
+        # Found a pair
+        if counts[card_val] == 2:
+            if organized_hand.hand_type.value < HT.PAIR.value:
+                organized_hand.primary = card_val
+                organized_hand.hand_type = HT.PAIR
+            elif organized_hand.hand_type == HT.PAIR:
+                organized_hand.secondary = card_val
+                organized_hand.hand_type = HT.TWO_PAIR
+            elif organized_hand.hand_type == HT.TRIPS:
+                organized_hand.secondary = card_val
+                organized_hand.hand_type = HT.FULL_HOUSE
             else:
-                org_hand.trips.append(i)
-        elif counts[i] == 2:
-            org_hand.pairs.append(i)
-
-    maxPairs = 2 if len(org_hand.trips) == 0 else 1
-    while len(org_hand.pairs) > maxPairs:
-        del org_hand.pairs[0]
-    
-    flush_ind = -1
-    org_hand.has_flush = False
-    for i in range(len(flushes)):
-        if flushes[i] >= 5:
-            flush_ind = i
-            org_hand.has_flush = True
-            break
-
-    # lowest ind is the start of the straight, it is 12 for A 2 3 4 5, 8 for 10 J Q K A, etc.
-    straight_start = -1
-    org_hand.has_straight = False
-    if counts[12] >= 1 and counts[0]>=1 and counts[1]>=1 and counts[2]>=1 and counts[3]>=1:
-        straight_start = 12
-        org_hand.has_straight = True
-
-    for i in range(9):
-        if counts[i]>=1 and counts[i+1]>=1 and counts[i+2]>=1 and counts[i+3]>=1 and counts[i+4]>=1:
-            straight_start = 8 if i == 8 else max(i, straight_start)
-            org_hand.has_straight = True
-
-    # MAKE HAND
-    # check royal flush/ straight flush after quads
-    if len(org_hand.quads) == 1:
-        org_hand.hand = [i for i in card_ints]
-        ind = 0
-        while len(org_hand.hand) > 5:
-            if org_hand.hand[ind] % 13 != org_hand.quads[0]:
-                del org_hand.hand[ind]
+                organized_hand.kickers += cards[ind:ind+2]
+            ind += 1
+        # Found trips
+        elif counts[card_val] == 3:
+            if organized_hand.hand_type.value < HT.PAIR.value:
+                organized_hand.primary = card_val
+                organized_hand.hand_type = HT.TRIPS
+            elif organized_hand.hand_type.value < HT.TRIPS.value:
+                organized_hand.secondary = organized_hand.primary
+                organized_hand.primary = card_val
+                organized_hand.hand_type = HT.FULL_HOUSE
+            elif organized_hand.hand_type == HT.TRIPS.value:
+                organized_hand.secondary = card_val
+                organized_hand.hand_type = HT.FULL_HOUSE
             else:
-                ind += 1
-        new_hand = [Card(i) for i in org_hand.hand]
-        org_hand.hand = new_hand
-    # full house
-    elif len(org_hand.trips) == 1 and len(org_hand.pairs) == 1:
-        org_hand.hand = [Card(i) for i in filter(lambda x: x % 13 == org_hand.pairs[0], card_ints)] + \
-               [Card(i) for i in filter(lambda x: x % 13 == org_hand.trips[0], card_ints)]
-    # flush
-    elif org_hand.has_flush:
-        org_hand.hand = [i for i in filter(lambda x: x // 13 == flush_ind, card_ints)]
-        while len(org_hand.hand) > 5:
-            del org_hand.hand[0]
-        new_hand = [Card(i) for i in org_hand.hand]
-        org_hand.hand = new_hand
-    # straight
-    elif org_hand.has_straight:
-        temp_straight = []
-        if straight_start == 12:
-            temp_straight = [0, 1, 2, 3, 12]
+                organized_hand.kickers += cards[ind:ind+3]
+            ind += 2
         else:
-            temp_straight = [i for i in range (straight_start, straight_start+5)]
-        org_hand.hand = []
-        for i in temp_straight:
-            for j in card_ints:
-                if j % 13 == i:
-                    org_hand.hand.append(j)
-                    break
-        temp_straight = [Card(i) for i in org_hand.hand]
-        org_hand.hand = temp_straight
-    # trips
-    elif len(org_hand.trips) == 1:
-        org_hand.hand = [i for i in card_ints]
-        ind = 0
-        while len(org_hand.hand) > 5:
-            if org_hand.hand[ind] % 13 != org_hand.trips[0]:
-                del org_hand.hand[ind]
-            else:
-                ind += 1
-        new_hand = [Card(i) for i in org_hand.hand]
-        org_hand.hand = new_hand
-    # 2 pair
-    elif len(org_hand.pairs) >= 2:
-        org_hand.hand = [i for i in card_ints]
-        ind = 0
-        while len(org_hand.hand) > 5:
-            if org_hand.hand[ind] % 13 != org_hand.pairs[-1] and org_hand.hand[ind] % 13 != org_hand.pairs[-2]:
-                del org_hand.hand[ind]
-            else:
-                ind += 1
-        new_hand = [Card(i) for i in org_hand.hand]
-        org_hand.hand = new_hand
-    # pair
-    elif len(org_hand.pairs) == 1:
-        org_hand.hand = [i for i in card_ints]
-        ind = 0
-        while len(org_hand.hand) > 5:
-            if org_hand.hand[ind] % 13 != org_hand.pairs[0]:
-                del org_hand.hand[ind]
-            else:
-                ind += 1
-        new_hand = [Card(i) for i in org_hand.hand]
-        org_hand.hand = new_hand
-    # high card
-    else:
-        if len(cards) > 5:
-            org_hand.hand = cards[-5:]
+            organized_hand.kickers.append(card)
+            if organized_hand.hand_type == HT.NONE:
+                organized_hand.hand_type = HT.HIGH_CARD
+        ind += 1
+    if organized_hand.hand_type == HT.HIGH_CARD:
+        organized_hand.hand = organized_hand.kickers[:min(5, len(organized_hand.kickers))]
+    elif organized_hand.hand_type == HT.PAIR:
+        organized_hand.hand = [i for i in cards if i.value % 13 == organized_hand.primary] + organized_hand.kickers[:3]
+    # tbh I should put hands for 2 pair, trips and quads for consistency but hands for those types aren't used
+    # and I'm too lazy
+
+    ### Assemble straight, flush, straight flush (includes royal flush) ###
+
+    # Deal with flushes
+    all_flush_cards = None
+    flush_suit = None
+    for suit in range(len(flushes)):
+        if flushes[suit] >= 5:
+            flush_suit = suit
+            all_flush_cards = []
+            break
+    # There's a flush
+    if all_flush_cards is not None:
+        for card in cards:
+            if card.value // 13 == flush_suit:
+                all_flush_cards.append(card)
+        # Take biggest flush for flush
+        if organized_hand.hand_type.value < HT.FLUSH:
+            organized_hand.hand_type = HT.FLUSH
+            organized_hand.hand = all_flush_cards[:5].copy()
+
+    # Deal with straights
+    cards_to_straight = 1
+    # All cards that can be part of a straight - note this can include multiple
+    # suits of the same card
+    all_straight_cards: List[Card] = [cards[0]]
+
+    for i in range(1, len(cards)):
+        if cards[i].value % 13 == cards[i-1].value % 13 - 1:
+            cards_to_straight += 1
+            all_straight_cards.append(cards[i])
+        elif cards[i].value % 13 == cards[i-1].value % 13:
+            all_straight_cards.append(cards[i])
         else:
-            org_hand.hand = cards
-
-    # check for straight flush/royal flush
-    sf_ind = -1
-    if org_hand.has_straight and org_hand.has_flush:
-        cards_to_print = [Card(i) for i in card_ints]
-        print("Hand has straight and flush: %s" % cards_to_print)
-        temp_hand = [i for i in filter(lambda x: x // 13 == flush_ind, card_ints)]
-        count = 1
-        for i in range(1, len(temp_hand)):
-            if (temp_hand[i]%13) - (temp_hand[i-1]%13) == 1:
-                count += 1
-                if count >= 5:
-                    sf_ind = i-4
+            if cards_to_straight >= 5:
+                break
             else:
-                sf_ind = i
-                count = 1
-        sf_ind = temp_hand[sf_ind] % 13
-        
-        if temp_hand[-1] % 13 == 12 and temp_hand[0] % 13 == 0 and temp_hand[1] % 13 == 1 and \
-                temp_hand[2] % 13 == 2 and temp_hand[3] % 13 == 3:
-            if sf_ind != 8:
-                sf_ind = 12
+                cards_to_straight = 1
+                all_straight_cards.clear()
+                all_straight_cards.append(cards[i])
 
-        if sf_ind != -1:
-            if sf_ind == 12:
-                org_hand.hand = [Card(i+13*flush_ind) for i in [0, 1, 2, 3, 12]]
+    # Check case of A low straight
+    if cards_to_straight >= 4 and all_straight_cards[-1].value % 13 == 0:
+        for card in cards:
+            if card.value % 13 == 12:
+                if all_straight_cards[-1].value % 13 != 12:
+                    cards_to_straight += 1
+                all_straight_cards.append(card)
+
+    # At this point all_straight_cards is sorted highest to lowest, where lowest could be an A
+    # Note that there can be repeated cards of same value but not suit in all_straight_cards
+    # Only assemble straight if there's no higher value hand already
+    if cards_to_straight >= 5 and organized_hand.hand_type.value < HT.STRAIGHT:
+        cardCount = 1
+        straight = [all_straight_cards[0]]
+        for i in range(1, len(all_straight_cards)):
+            if all_straight_cards[i].value % 13 != straight[-1].value % 13:
+                straight.append(all_straight_cards[i])
+                cardCount += 1
+            if cardCount == 5:
+                organized_hand.hand_type = HT.STRAIGHT
+                organized_hand.hand = straight
+                break
+
+    # See if there's a straight flush
+    if flush_suit is not None and cards_to_straight >= 5:
+        straight_flush_cards = [i for i in filter(lambda x: x.value // 13 == flush_suit, all_straight_cards)]
+        straight_flush = [straight_flush_cards[0]]
+        for i in range(1, len(straight_flush_cards)):
+            n = straight_flush_cards[i].value % 13
+            last = straight_flush[-1].value % 13
+            if n == last - 1 or n == 12 and last == 0:
+                straight_flush.append(straight_flush_cards[i])
             else:
-                print("Hand: %s has sf_ind of %d" % (temp_hand, sf_ind))
-                org_hand.hand = [Card(i+13*flush_ind) for i in range(sf_ind, sf_ind+5)]
+                straight_flush.clear()
+                straight_flush.append(straight_flush_cards[i])
+            if len(straight_flush) == 5:
+                organized_hand.hand_type = HT.STRAIGHT_FLUSH
+                organized_hand.hand = straight_flush
+                break
 
-    org_hand.has_straight_flush = sf_ind != -1
-    return org_hand
-        
+    if organized_hand.hand is not None:
+        organized_hand.hand.sort(key=lambda x: x.value % 13)
+    return organized_hand
+
+
 """
 Get high card score of a hand following scoring rule below
 :type cards: Card[5], sorted ascending
@@ -188,39 +179,37 @@ Straight Flush: 51000000 - 51264562 (51 000 000 + high card score)
 Royal Flush: 52000000
 """
 def get_score(cards: List[Card]):
-    
     d = organize(cards)
-    if d.has_straight_flush:
+    if d.hand_type == HT.STRAIGHT_FLUSH:
         if d.hand[0].value % 13 == 8:
             # Royal Flush
             return 52000000
         else:
             # Straight Flush
-            return 51000000 + get_high_card_score(d.hand)
-    else:
-        if len(d.quads) == 1:
-            kicker = [i for i in filter(lambda x: x.value % 13 != d.quads[0], d.hand)][0]
-            return 50000000 + (d.quads[0]+10)**2 + (kicker.value % 13)
-        elif len(d.trips) == 1 and len(d.pairs) == 1:
-            return 49000000 + (d.trips[0]+10)**2 + d.pairs[0]
-        elif d.has_flush:
-            return 48000000 + get_high_card_score(d.hand)
-        elif d.has_straight:
-            score = 47000000 + get_high_card_score(d.hand)
-            if Card.HA in d.hand or Card.DA in d.hand or Card.CA in d.hand or Card.SA in d.hand:
+            score = 51000000 + get_high_card_score(d.hand)
+            if d.hand[-1].value % 13 == 12 and d.hand[0].value % 13 == 0:
                 score -= 12**5
             return score
-        elif len(d.trips) == 1:
-            kickers = [i for i in filter(lambda x: x.value % 13 != d.trips[0], d.hand)]
-            kickers.sort(key=lambda x: x.value % 13)
-            return 31000000 + ((d.trips[0]+10)**5)*3 + kickers[1].value**3 + kickers[0].value
-        elif len(d.pairs) >= 2:
-            kicker = [i for i in filter(
-                lambda x: x.value % 13 != d.pairs[-1] and x.value % 13 != d.pairs[-2], d.hand
-            )][0]
-            return 30000000 + (d.pairs[1]**5)*2 + (d.pairs[0]**3)*2 + kicker.value % 13
-        elif len(d.pairs) == 1:
-            return 300000 + get_high_card_score(d.hand) + ((d.pairs[0] + 13)**5)*3
+    else:
+        if d.hand_type == HT.QUADS:
+            kicker = d.kickers[0]
+            return 50000000 + (d.primary + 10)**2 + (kicker.value % 13)
+        elif d.hand_type == HT.FULL_HOUSE:
+            return 49000000 + (d.primary + 10)**2 + d.secondary
+        elif d.hand_type == HT.FLUSH is not None:
+            return 48000000 + get_high_card_score(d.hand)
+        elif d.hand_type == HT.STRAIGHT:
+            score = 47000000 + get_high_card_score(d.hand)
+            # Ace low straight case
+            if d.hand[-1].value % 13 == 12 and d.hand[0].value % 13 == 0:
+                score -= 12**5
+            return score
+        elif d.hand_type == HT.TRIPS:
+            return 31000000 + ((d.primary + 10)**5)*3 + (d.kickers[0].value % 13)**3 + d.kickers[1].value % 13
+        elif d.hand_type == HT.TWO_PAIR:
+            return 30000000 + (d.primary**5)*2 + (d.secondary**3)*2 + d.kickers[0].value % 13
+        elif d.hand_type == HT.PAIR:
+            return 300000 + get_high_card_score(d.hand) + ((d.primary + 13)**5)*3
         else:
             return get_high_card_score(d.hand)
 

@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, TYPE_CHECKING
 
 from src.common.enums.action_type import ActionType
 from src.common.enums.card import Card
+from src.common.enums.hand_types import HandType
 from src.common.enums.street import Street
 if TYPE_CHECKING:
     from src.players.player import Player
@@ -58,11 +59,9 @@ class RoundInfo:
 
 @dataclass
 class OrganizedHand:
-    cards: List[Card]  # sorted ascending
-    hand: List[Card]  # 5 max, sorted ascending
-    pairs: List[int]  # of the paired cards
-    trips: List[int]  # of the trip cards
-    quads: List[int]  # of the quad card
-    has_flush: bool = False
-    has_straight: bool = False
-    has_straight_flush: bool = False
+    cards: List[Card] = None   # sorted ascending
+    hand: List[Card] = None    # 5 cards max, sorted ascending - we use this to hold flushes and straights
+    primary: int = -1          # card value of primary cards defining hand (biggest pair/trip/quad card)
+    secondary: int = -1        # card value of secondary cards (2nd pair for 2 pair, pair for full house)
+    kickers: List[Card] = field(default_factory=list)  # sorted descending
+    hand_type: HandType = HandType.NONE

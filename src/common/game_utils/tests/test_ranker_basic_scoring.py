@@ -3,12 +3,7 @@ import unittest
 from src.common.enums.card import Card as C
 from src.common.game_utils.ranker import *
 
-class TestRanker(unittest.TestCase):
-
-    """
-    Intra Hand Type Tests
-    - Test comparisons between hands of the same type eg. Pair vs pair, trips vs trips, etc
-    """
+class TestRankerBasicScoring(unittest.TestCase):
 
     def test_intra_high_card(self):
         s1 = get_score([C.C2, C.C4, C.C5, C.S8, C.SA])
@@ -78,6 +73,13 @@ class TestRanker(unittest.TestCase):
         c2 = [C.C4, C.C5, C.C6, C.C7, C.H8]
         self.assertGreater(get_score(c2), get_score(c1))
 
+    def test_ace_straight_smaller_than_all_straights(self):
+        s1 = get_score([C.CA, C.S2, C.H3, C.D4, C.C5])
+        s2 = get_score([C.C2, C.S3, C.H4, C.D5, C.C6])
+        s3 = get_score([C.C10, C.CJ, C.HQ, C.SK, C.DA])
+        self.assertGreater(s2, s1)
+        self.assertGreater(s3, s1)
+
     def test_intra_flushes(self):
         s1 = get_score([C.CA, C.C10, C.C9, C.C8, C.C7])
         s2 = get_score([C.CK, C.C10, C.C9, C.C8, C.C7])
@@ -100,14 +102,32 @@ class TestRanker(unittest.TestCase):
         s6 = get_score([C.C2, C.D2, C.H2, C.S2, C.C4])
         self.assertGreater(s6, s5, "Equal quads higher kicker")
 
-    def test_ace_straight_smaller_than_all_straights(self):
-        c1 = [C.CA, C.S2, C.H3, C.D4, C.C5]
-        c2 = [C.C2, C.S3, C.H4, C.D5, C.C6]
-        c3 = [C.C10, C.CJ, C.HQ, C.SK, C.DA]
-        self.assertGreater(get_score(c2), get_score(c1))
-        self.assertGreater(get_score(c3), get_score(c1))
+    def test_intra_full_house(self):
+        s1 = get_score([C.CA, C.SA, C.DA, C.H2, C.S2])
+        s2 = get_score([C.CK, C.SK, C.DK, C.H2, C.S2])
+        self.assertGreater(s1, s2, "Higher triple")
 
+        s1 = get_score([C.CA, C.SA, C.DA, C.H3, C.S3])
+        s2 = get_score([C.CA, C.SA, C.DA, C.H2, C.S2])
+        self.assertGreater(s1, s2, "Higher pair")
+
+        s1 = get_score([C.CA, C.SA, C.D2, C.H2, C.S2])
+        s2 = get_score([C.C4, C.S4, C.D3, C.H3, C.S3])
+        self.assertGreater(s2, s1, "Lowest higher triple biggest higher pair")
+
+    def test_intra_straight_flush(self):
+        s1 = get_score([C.CA, C.C2, C.C3, C.C4, C.C5])
+        s2 = get_score([C.C2, C.C3, C.C4, C.C5, C.C6])
+        self.assertGreater(s2, s1, "Ace low straight flush")
+
+        s1 = get_score([C.C3, C.C4, C.C5, C.C6, C.C7])
+        s2 = get_score([C.C2, C.C3, C.C4, C.C5, C.C6])
+        self.assertGreater(s1, s2, "Lowest straight flushes")
+
+        s1 = get_score([C.CA, C.CK, C.CQ, C.CJ, C.C10])
+        s2 = get_score([C.CK, C.CQ, C.CJ, C.C10, C.C9])
+        self.assertGreater(s1, s2, "Highest straight flushes")
 
 if __name__ == "__main__":
-    suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestRanker)
+    suite = unittest.defaultTestLoader.loadTestsFromTestCase(TestRankerBasicScoring)
     unittest.TextTestRunner().run(suite)
