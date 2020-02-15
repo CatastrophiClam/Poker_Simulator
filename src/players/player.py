@@ -24,6 +24,7 @@ class Player:
         self.starting_money = starting_money
         self.total_money_invested = starting_money
         self.player_profile.id = pid
+        self.wins = 0
 
     def deal(self, cards: Tuple[Card, Card]):
         self.cards = cards

@@ -1,0 +1,4 @@
+*.pyc
+*.iws
+workspace.xml
+tasks.xml

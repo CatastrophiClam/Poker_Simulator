@@ -4,10 +4,10 @@ from src.data.data import DataTracker
 from src.players.ai.profiles.v0.profile import PlayerProfile as ProfileV0
 from src.common.enums.card import Card as C
 
-NUM_HANDS_PER_SESSION = 1000
+NUM_HANDS_PER_SESSION = 100000
 STARTING_MONEY = 100000
 BIG_BLIND = 500
-LOG_THRESHOLD = 1000000
+LOG_THRESHOLD = 50000
 
 # MAIN SCRIPT
 # generate players
@@ -28,6 +28,9 @@ session = Session(players, BIG_BLIND, STARTING_MONEY)
 # run game NUM_TRIALS times
 for i in range(NUM_HANDS_PER_SESSION):
     info = session.run_round()
+    for player in players:
+        if player.money < STARTING_MONEY / 2:
+            player.rebuy()
     # data.log(info)
 
 for i in players:
