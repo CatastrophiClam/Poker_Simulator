@@ -48,6 +48,7 @@ class RoundInfo:
     small_blind: int
     big_blind: int
     street_info: Dict[Street, StreetInfo]
+    players_to_hand_score: Dict[PlayerID, int]
 
     def __init__(self, dealer: 'Player', all_community_cards: List[Card], small_blind: int, big_blind: int):
         self.current_street = Street.PREFLOP
@@ -56,6 +57,7 @@ class RoundInfo:
         self.small_blind = small_blind
         self.big_blind = big_blind
         self.street_info = {}
+        self.players_to_hand_score = {}
 
 @dataclass
 class OrganizedHand:

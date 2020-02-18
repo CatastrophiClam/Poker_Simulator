@@ -14,29 +14,24 @@ from src.game.table import Table
 """
 def get_players_winnings(round_info: RoundInfo, table: Table) -> Dict[PlayerID, int]:
     r = round_info
-    latest_street = r.current_street
-    latest_street_info = r.street_info[latest_street]
     # get a score for each hand
     scores = []
-    for player in table.all_players_in_round:
-        score = get_score(r.all_community_cards + list(player.cards))
-        scores.append((player, score))
+    for player_id in round_info.players_to_hand_score:
+        scores.append((player_id, round_info.players_to_hand_score[player_id]))
     scores.sort(key=lambda x: x[1], reverse=True)
-    # for s in scores:
-    #     print("Player %d hand: %s scored: %d" % (s[0].id, s[0].cards, s[1]))
 
     # distribute money
     # first, split players into groups of people who split the pot
     if len(scores) == 0:
         return {}
     groups: List[List[PlayerID]] = []
-    currGroup = [scores[0][0].id]
+    currGroup = [scores[0][0]]
     for i in range(1, len(scores)):
         if scores[i][1] < scores[i-1][1]:
             groups.append(currGroup)
-            currGroup = [scores[i][0].id]
+            currGroup = [scores[i][0]]
         else:
-            currGroup.append(scores[i][0].id)
+            currGroup.append(scores[i][0])
     groups.append(currGroup)
     # print("Groups: %s" % groups)
     # for each group, split pot appropriately
@@ -199,9 +194,14 @@ class Session:
             self.round_info.current_street = G.RIVER
             self.run_street(self.round_info, self.table)
 
+        # get a score for each hand
+        for player in self.table.all_players_in_round:
+            score = get_score(self.round_info.all_community_cards + list(player.cards))
+            self.round_info.players_to_hand_score[player.id] = score
+
         # distribute winnings
         players_to_winnings: Dict[PlayerID, int] = get_players_winnings(self.round_info, self.table)
-        # print(players_to_winnings)
+
         for player in self.players:
             if player.id in players_to_winnings:
                 player.win_money(players_to_winnings[player.id])

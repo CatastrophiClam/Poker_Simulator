@@ -3,6 +3,8 @@
 
 ## Requirements
 - Hook into game to record stats
+- Need dynamic way to choose what sort of data to record
+- Store data into some sort of structure
 
 ### Be able to display:
 
@@ -19,6 +21,25 @@
 #### Action Stats
 - Bet, raise, 3-bet, reraise percentages
 
+## Design
+- There will be 2 types of data we need to keep track of: accumulative data and non-accumulative data
+
+### Accumulative Data
+- This is data that can't be aggregated - we have to store the whole thing every time
+- Eg. Whole rounds of poker, the hands that a player plays, etc
+- The amount of data will accumulate with the amount of rounds run, so keeping track of this data will
+limit the amount of rounds we can run
+
+### Non-Accumulative Data
+- Data that can be aggregated
+- Eg. Total winnings of a player, win percentages of hands
+- This data does not increase with the amount of rounds run
+
+### Data Stores
+- We store all necessary data using data stores
+- Each data store stores one particular metric we want to measure and provides methods to log and recall
+those metrics
+- This way we can easily and declaratively choose which metrics we want to keep track of each session
 
 ## Notable Statistics
 - Voluntarily put money in pot (VPIP)% of all hands - how loose-tight player is
