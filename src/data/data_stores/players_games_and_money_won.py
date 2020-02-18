@@ -10,6 +10,7 @@ class PlayersGamesAndMoneyWon(BaseDataStore):
     games_won_with_tie_by_player: Dict[PlayerID, int]
     winnings_by_player:Dict[PlayerID, int]
     total_games_recorded: int
+    big_blind: int
 
     def __init__(self):
         self.total_games_recorded = 0
@@ -24,14 +25,16 @@ class PlayersGamesAndMoneyWon(BaseDataStore):
                 pids.append(pid)
         pids.sort()
         for pid in pids:
-            print("Player %d (net %d chips): won %d without ties, won %d with ties out of %d games" %
-                  (pid, self.winnings_by_player[pid], self.games_won_no_tie_by_player[pid],
+            big_blinds_per_game = self.winnings_by_player[pid] / self.total_games_recorded / self.big_blind
+            print("Player %d (net %d chips, %f BBs per game): won %d without ties, won %d with ties out of %d games" %
+                  (pid, self.winnings_by_player[pid], big_blinds_per_game, self.games_won_no_tie_by_player[pid],
                    self.games_won_with_tie_by_player[pid], self.total_games_recorded))
         print()
 
     def record(self, round_record: RoundRecord) -> bool:
         winners = set()
         max_score = -1
+        self.big_blind = round_record.big_blind
 
         # Record games won
         for pid in round_record.players_to_hand_score:
