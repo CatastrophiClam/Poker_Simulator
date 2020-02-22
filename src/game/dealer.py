@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 
 from src.common.models.game import PlayerID
 from src.common.enums.card import Card as C
@@ -24,7 +24,7 @@ class Dealer:
     :return list of community cards
     """
     def deal(self, players: List[Player]) -> List[Card]:
-        available_cards: List[Card] = [i for i in C if i not in self.com_cards]
+        available_cards: Set[Card] = set([i for i in C if i not in self.com_cards])
 
         # first deal players with set cards
         for player in players:
@@ -42,9 +42,9 @@ class Dealer:
                     # TODO: generate a hand from range
                     print("Hand generation from range isn't implemented yet")
             while len(player_hand) < 2:
-                ind = random.randint(0, len(available_cards) - 1)
-                player_hand.append(available_cards[ind])
-                del available_cards[ind]
+                card = random.sample(available_cards, 1)[0]
+                player_hand.append(card)
+                available_cards.remove(card)
             player.deal((player_hand[0], player_hand[1]))
 
         # generate community cards
@@ -54,9 +54,8 @@ class Dealer:
             if i < len(self.com_cards):
                 card = self.com_cards[i]
             if card is None:
-                ind = random.randint(0, len(available_cards) - 1)
-                card = available_cards[ind]
-                del available_cards[ind]
+                card = random.sample(available_cards, 1)[0]
+                available_cards.remove(card)
             returned_com_cards.append(card)
 
         return returned_com_cards

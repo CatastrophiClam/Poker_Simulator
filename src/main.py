@@ -1,5 +1,7 @@
 import time
 
+from src.common.game_utils.range.range import Range
+from src.common.game_utils.range.range_preset import RangePreset
 from src.console.data_console import DataConsole
 from src.data.data_stores.players_games_and_money_won import PlayersGamesAndMoneyWon
 from src.game.session import Session
@@ -24,6 +26,7 @@ data_tracker = DataTracker(PERSISTENT_LOG_THRESHOLD, data_stores)
 
 # Create session
 session = Session(players, BIG_BLIND, STARTING_MONEY)
+general_range = Range(preset=RangePreset.ALL)
 # session.set_deck_biases({0: (C.SA, C.H2), 1: (C.HA, C.S7), 2: (C.DA, C.S5), 3: (C.S2, C.H7)})
 # session.set_com_cards([C.C3, C.S3, C.S4, C.H4, C.HK])
 
