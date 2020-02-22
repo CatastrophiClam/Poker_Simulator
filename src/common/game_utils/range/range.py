@@ -70,9 +70,9 @@ class Range:
     """
     @staticmethod
     def get_r_c(c1: Card, c2: Card) -> Tuple[int, int]:
-        c1_ind: int = 13 - c1.value
-        c2_ind: int = 13 - c2.value
-        if c1 // 13 == c2 // 13:
+        c1_ind: int = 12 - c1.value % 13
+        c2_ind: int = 12 - c2.value % 13
+        if c1.value // 13 == c2.value // 13:
             return min(c1_ind, c2_ind), max(c1_ind, c2_ind)
         else:
             return max(c1_ind, c2_ind), min(c1_ind, c2_ind)

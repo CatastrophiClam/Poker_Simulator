@@ -1,4 +1,4 @@
-from random import random
+import random
 from typing import Tuple, List
 
 from src.common.enums.card import Card
@@ -16,13 +16,13 @@ class RangeHandGenerator:
             for c in range(len(grid[r])):
                 if grid[r][c] > 0:
                     # append card values and whether they're suited
-                    self.possible_hands.append((13-r, 13-c, c > r))
+                    self.possible_hands.append((12-r, 12-c, c > r))
                     self.probabilities.append(grid[r][c])
 
         total = 0
         for p in self.probabilities:
             total += p
-        self.cum_probabilities = [p/total for p in self.probabilities]
+            self.cum_probabilities.append(total)
 
     """
     Generate a hand relative probabilities - for example if AA had 100% and KK had 50% 
@@ -32,11 +32,11 @@ class RangeHandGenerator:
         raw_hand = random.choices(self.possible_hands, cum_weights=self.cum_probabilities)[0]
         c1, c2, is_suited = raw_hand
         if c1 == c2:
-            hand = random.choices([c1, c1+13, c1+26, c1+39], k=2)
+            hand = random.sample([c1, c1+13, c1+26, c1+39], 2)
             return Card(hand[0]), Card(hand[1])
         else:
             if is_suited:
-                suit = random.choices([0, 1, 2, 3])
+                suit = random.sample([0, 1, 2, 3], 1)
                 return Card(c1+13*suit), Card(c2+13*suit)
             else:
                 return Card(random.choices([c1, c1+13, c1+26, c1+39], k=1)[0]), \

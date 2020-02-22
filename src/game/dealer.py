@@ -1,5 +1,7 @@
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Union
 
+from src.common.game_utils.range.range import Range
+from src.common.game_utils.range.range_hand_generator import RangeHandGenerator
 from src.common.models.game import PlayerID
 from src.common.enums.card import Card as C
 import random
@@ -12,7 +14,7 @@ class Dealer:
 
     # Allows us to give certain players certain cards
     # Note we can set only one card for a players by setting the other card in the tuple to None
-    deck_biases: Dict[PlayerID, Tuple[Card, Card]] = {}
+    deck_biases: Dict[PlayerID, Union[Tuple[Card, Card], RangeHandGenerator]] = {}
 
     # Allows us to set community cards
     # Ordered from flop to turn
@@ -39,8 +41,13 @@ class Dealer:
                         player_hand.append(hand_to_set[1])
                         available_cards.remove(hand_to_set[1])
                 else:
-                    # TODO: generate a hand from range
-                    print("Hand generation from range isn't implemented yet")
+                    # generate hand from range
+                    player_hand = list(self.deck_biases[player.id].generate_weighted())
+                    # This may loop a bunch if we're unlucky, need way to make sure this terminates
+                    while player_hand[0] not in available_cards or player_hand[1] not in available_cards:
+                        player_hand = list(self.deck_biases[player.id].generate_weighted())
+                    available_cards.remove(player_hand[0])
+                    available_cards.remove(player_hand[1])
             while len(player_hand) < 2:
                 card = random.sample(available_cards, 1)[0]
                 player_hand.append(card)
@@ -63,8 +70,13 @@ class Dealer:
     def set_com_cards(self, new_com_cards: List[Card]):
         self.com_cards = new_com_cards
 
-    def set_deck_biases(self, new_deck_biases: Dict[PlayerID, Tuple[Card, Card]]):
-        self.deck_biases = new_deck_biases
+    def set_deck_biases(self, new_deck_biases: Dict[PlayerID, Union[Tuple[Card, Card], Range]]):
+        temp_deck_biases = new_deck_biases.copy()
+        for pid in temp_deck_biases:
+            if type(temp_deck_biases[pid]) == Range:
+                self.deck_biases[pid] = RangeHandGenerator(temp_deck_biases[pid])
+            else:
+                self.deck_biases[pid] = temp_deck_biases[pid]
 
     def clear_com_cards(self):
         self.com_cards = []

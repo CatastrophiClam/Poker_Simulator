@@ -26,9 +26,11 @@ class PlayersGamesAndMoneyWon(BaseDataStore):
         pids.sort()
         for pid in pids:
             big_blinds_per_game = self.winnings_by_player[pid] / self.total_games_recorded / self.big_blind
+            games_won = self.games_won_no_tie_by_player[pid] if pid in self.games_won_no_tie_by_player else 0
+            games_won_with_tie = self.games_won_with_tie_by_player[pid] if pid in self.games_won_with_tie_by_player else 0
             print("Player %d (net %d chips, %f BBs per game): won %d without ties, won %d with ties out of %d games" %
-                  (pid, self.winnings_by_player[pid], big_blinds_per_game, self.games_won_no_tie_by_player[pid],
-                   self.games_won_with_tie_by_player[pid], self.total_games_recorded))
+                  (pid, self.winnings_by_player[pid], big_blinds_per_game, games_won,
+                   games_won_with_tie, self.total_games_recorded))
         print()
 
     def record(self, round_record: RoundRecord) -> bool:

@@ -26,9 +26,11 @@ data_tracker = DataTracker(PERSISTENT_LOG_THRESHOLD, data_stores)
 
 # Create session
 session = Session(players, BIG_BLIND, STARTING_MONEY)
-general_range = Range(preset=RangePreset.ALL)
-# session.set_deck_biases({0: (C.SA, C.H2), 1: (C.HA, C.S7), 2: (C.DA, C.S5), 3: (C.S2, C.H7)})
-# session.set_com_cards([C.C3, C.S3, C.S4, C.H4, C.HK])
+p0_range = Range(preset=RangePreset.NONE)
+p0_range.set_cell_probability(C.CA, C.DA, 1)
+p0_range.set_cell_probability(C.CK, C.DK, 1)
+p0_range.set_cell_probability(C.CQ, C.DQ, 1)
+session.set_deck_biases({0: p0_range})
 
 # run game NUM_TRIALS times
 start_time = time.process_time_ns()
