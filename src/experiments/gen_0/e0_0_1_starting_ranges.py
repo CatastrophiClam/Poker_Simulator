@@ -1,9 +1,7 @@
-from typing import List
 
 from src.common.enums.card import Card
 from src.common.game_utils.range.range import Range
 from src.common.game_utils.range.range_preset import RangePreset
-from src.data.base_data_store import BaseDataStore
 from src.data.data_stores.players_games_and_money_won import PlayersGamesAndMoneyWon
 from src.experiments.base_experiment import BaseExperiment
 from src.game.session import Session
@@ -20,7 +18,7 @@ class E0_0_1(BaseExperiment):
         self.persistent_log_threshold: int = 50000
         player_profiles = [ProfileV0(), ProfileV0(), ProfileV0(), ProfileV0()]
         self.players = [Player(player_profiles[i], self.starting_money, i) for i in range(len(player_profiles))]
-        self.data_stores = [PlayersGamesAndMoneyWon()]
+        self.data_stores = [PlayersGamesAndMoneyWon([])]
         self.session = Session(self.players, self.big_blind, self.starting_money)
         p0_range = Range(preset=RangePreset.NONE)
         p0_range.set_cell_probability(Card.CA, Card.DA, 1)

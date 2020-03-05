@@ -23,6 +23,7 @@ class BaseExperiment(ABC):
         data_tracker = DataTracker(self.persistent_log_threshold, self.data_stores)
 
         # run game num_hands_per_session times
+        print("Starting Experiment")
         start_time = time.process_time_ns()
         for i in range(self.num_hands_per_session):
             info = self.session.run_round()

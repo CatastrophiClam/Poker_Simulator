@@ -55,3 +55,13 @@ class RoundRecord:
             temp_net_winnings_by_player[pid] += self.winners_to_winnings[pid]
         object.__setattr__(self, "net_winnings_by_player", temp_net_winnings_by_player)
 
+@dataclass(frozen=True)
+class Category:
+    category: int
+    description: str
+
+    def __eq__(self, other):
+        return self.category == other.category and self.description == other.description
+
+    def __hash__(self):
+        return hash((self.category, self.description))

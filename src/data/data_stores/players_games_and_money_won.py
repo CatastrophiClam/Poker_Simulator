@@ -1,39 +1,43 @@
-from typing import Dict
+from typing import Dict, List
 
 from src.common.models.data import RoundRecord
 from src.common.models.game import PlayerID
-from src.data.base_data_store import BaseDataStore
+from src.data.base_filter import BaseFilter
+from src.data.non_accumulative_data_store import NonAccumulativeDataStore
 
 
-class PlayersGamesAndMoneyWon(BaseDataStore):
-    games_won_no_tie_by_player: Dict[PlayerID, int]
-    games_won_with_tie_by_player: Dict[PlayerID, int]
-    winnings_by_player:Dict[PlayerID, int]
-    total_games_recorded: int
+class PlayersGamesAndMoneyWon(NonAccumulativeDataStore):
+
     big_blind: int
 
-    def __init__(self):
-        self.total_games_recorded = 0
-        self.games_won_no_tie_by_player = {}
-        self.games_won_with_tie_by_player = {}
-        self.winnings_by_player = {}
+    def __init__(self, filters: List[BaseFilter]):
+        super().__init__(filters)
 
-    def handle_console_queries(self):
-        pids = [i for i in self.games_won_no_tie_by_player]
-        for pid in self.games_won_with_tie_by_player:
+    def initialize_segment(self, segment):
+        segment['games_won_no_tie_by_player'] = {}
+        segment['games_won_with_tie_by_player'] = {}
+        segment['winnings_by_player'] = {}
+        segment['games_recorded_in_segment'] = 0
+
+    def print_data(self):
+        segment = self.segment_to_display
+        pids = [i for i in segment['games_won_no_tie_by_player']]
+        for pid in segment['games_won_with_tie_by_player']:
             if pid not in pids:
                 pids.append(pid)
         pids.sort()
         for pid in pids:
-            big_blinds_per_game = self.winnings_by_player[pid] / self.total_games_recorded / self.big_blind
-            games_won = self.games_won_no_tie_by_player[pid] if pid in self.games_won_no_tie_by_player else 0
-            games_won_with_tie = self.games_won_with_tie_by_player[pid] if pid in self.games_won_with_tie_by_player else 0
+            big_blinds_per_game = segment['winnings_by_player'][pid] / segment['games_recorded_in_segment'] / self.big_blind
+            games_won = segment['games_won_no_tie_by_player'][pid] \
+                if pid in segment['games_won_no_tie_by_player'] else 0
+            games_won_with_tie = segment['games_won_with_tie_by_player'][pid] \
+                if pid in segment['games_won_with_tie_by_player'] else 0
             print("Player %d (net %d chips, %f BBs per game): won %d without ties, won %d with ties out of %d games" %
-                  (pid, self.winnings_by_player[pid], big_blinds_per_game, games_won,
-                   games_won_with_tie, self.total_games_recorded))
+                  (pid, segment['winnings_by_player'][pid], big_blinds_per_game, games_won,
+                   games_won_with_tie, segment['games_recorded_in_segment']))
         print()
 
-    def record(self, round_record: RoundRecord) -> bool:
+    def record_segment(self, data_segment, round_record: RoundRecord) -> bool:
         winners = set()
         max_score = -1
         self.big_blind = round_record.big_blind
@@ -49,20 +53,20 @@ class PlayersGamesAndMoneyWon(BaseDataStore):
                 winners.add(pid)
         for pid in winners:
             if len(winners) > 1:
-                if pid not in self.games_won_with_tie_by_player:
-                    self.games_won_with_tie_by_player[pid] = 0
-                self.games_won_with_tie_by_player[pid] += 1
+                if pid not in data_segment['games_won_with_tie_by_player']:
+                    data_segment['games_won_with_tie_by_player'][pid] = 0
+                data_segment['games_won_with_tie_by_player'][pid] += 1
             else:
-                if pid not in self.games_won_no_tie_by_player:
-                    self.games_won_no_tie_by_player[pid] = 0
-                self.games_won_no_tie_by_player[pid] += 1
+                if pid not in data_segment['games_won_no_tie_by_player']:
+                    data_segment['games_won_no_tie_by_player'][pid] = 0
+                data_segment['games_won_no_tie_by_player'][pid] += 1
 
         # Record money won
         for pid in round_record.net_winnings_by_player:
-            if pid not in self.winnings_by_player:
-                self.winnings_by_player[pid] = 0
-            self.winnings_by_player[pid] += round_record.net_winnings_by_player[pid]
-        self.total_games_recorded += 1
+            if pid not in data_segment['winnings_by_player']:
+                data_segment['winnings_by_player'][pid] = 0
+            data_segment['winnings_by_player'][pid] += round_record.net_winnings_by_player[pid]
+        data_segment['games_recorded_in_segment'] += 1
         return True
 
     def __str__(self):

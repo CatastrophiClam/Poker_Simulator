@@ -12,18 +12,18 @@ class DataConsole:
         self.data_stores = data_stores
 
     def print_menu(self):
+        print("Options: ")
         for i in range(len(self.data_stores)):
             print("%d - %s" % (i, self.data_stores[i]))
         print()
 
     def start_data_console(self):
-        print("Options: ")
         self.print_menu()
         while True:
-            print('Input a command or type O for options again: ')
+            print('Input a command or type o for options again: ')
             command = input()
-            if command == 'O':
+            if command == 'o':
                 self.print_menu()
             elif command.isdigit():
                 if int(command) < len(self.data_stores):
-                    self.data_stores[int(command)].handle_console_queries()
+                    self.data_stores[int(command)].handle_console()

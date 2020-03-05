@@ -23,6 +23,7 @@
 
 ## Design
 - There will be 2 types of data we need to keep track of: accumulative data and non-accumulative data
+- We will also need filters and categories for data
 
 ### Accumulative Data
 - This is data that can't be aggregated - we have to store the whole thing every time
@@ -40,6 +41,15 @@ limit the amount of rounds we can run
 - Each data store stores one particular metric we want to measure and provides methods to log and recall
 those metrics
 - This way we can easily and declaratively choose which metrics we want to keep track of each session
+
+### Filters
+We want a way to dynamically filter our data sets. At a high level,
+every one of our data stores should be able to take in Filter objects. They should then store data in a way 
+such that we can get accurate sets of data from different combinations of filters. Note that our accumulative 
+data wouldn't be able to do combinations of filters though.
+
+Each filter should take in a roundRecord and decide if it passes the filter or not. Its str method should
+return a description of itself. The filters split our data records into segments. 
 
 ## Notable Statistics
 - Voluntarily put money in pot (VPIP)% of all hands - how loose-tight player is
