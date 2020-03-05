@@ -16,7 +16,7 @@ class NonAccumulativeDataStore(BaseDataStore):
             while True:
                 print("Available filters: ")
                 for i in range(len(self.filters)):
-                    print("%d - " + self.filters[i] % i + 1)
+                    print(("%d - " + str(self.filters[i])) % (i + 1))
                 print()
                 print("c - Clear filter")
                 print("p - Print data")
@@ -33,7 +33,7 @@ class NonAccumulativeDataStore(BaseDataStore):
                 elif command.isdigit():
                     command = int(command)
                     if command - 1 < len(self.filters):
-                        self.use_filter(self.filters[command - 1])
+                        self.use_filter(command-1)
                         print("Using filter: %s" % str(self.filters[command - 1]))
                     else:
                         print("Invalid filter")

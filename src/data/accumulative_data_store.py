@@ -18,7 +18,7 @@ class AccumulativeDataStore(BaseDataStore):
             while True:
                 print("Available filters - use number to select filter or negative of number to select inverse filter")
                 for i in range(len(self.filters)):
-                    print("%d - "+self.filters[i] % i+1)
+                    print(("%d - "+str(self.filters[i])) % (i+1))
                 print()
                 print("c - Clear filters")
                 print("p - Print data")
@@ -33,8 +33,9 @@ class AccumulativeDataStore(BaseDataStore):
                     self.clear_filters()
                 elif command == 'q':
                     break
-                elif command.isdigit():
+                elif command.lstrip('-+').isdigit():
                     command = int(command)
+                    print(command)
                     if command < 0:
                         if abs(command) - 1 < len(self.filters):
                             self.add_inverse_filter(command)
@@ -48,6 +49,8 @@ class AccumulativeDataStore(BaseDataStore):
                         else:
                             print("Invalid filter")
                     print()
+                else:
+                    print("Invalid command")
         else:
             self.print_data()
 

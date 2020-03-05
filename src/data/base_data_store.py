@@ -24,8 +24,10 @@ class BaseDataStore(ABC):
         answer = True
         for i in range(len(self.filters)):
             if self.filters[i].check(record):
-                answer = answer and self.record_segment(self.data_segments[i], False, record)
-        answer = answer and self.record_segment(self.unfiltered_segment, True, record)
+                temp = self.record_segment(self.data_segments[i], False, record)
+                answer = answer and temp
+        temp = self.record_segment(self.unfiltered_segment, True, record)
+        answer = answer and temp
 
         # Make sure total games recorded is incremented AFTER all segments have recorded data
         self.total_games_recorded += 1
