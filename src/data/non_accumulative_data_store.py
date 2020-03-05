@@ -45,7 +45,7 @@ class NonAccumulativeDataStore(BaseDataStore):
         self.segment_to_display = self.data_segments[filter_ind]
 
     @abstractmethod
-    def record_segment(self, data_segment, record: RoundRecord) -> bool:
+    def record_segment(self, data_segment, is_segment_unfiltered_segment: bool, record: RoundRecord) -> bool:
         pass
 
     @abstractmethod
@@ -57,5 +57,5 @@ class NonAccumulativeDataStore(BaseDataStore):
         pass
 
     @abstractmethod
-    def initialize_segment(self, segment):
+    def initialize_segment(self, segment, is_segment_unfiltered_segment=False):
         pass

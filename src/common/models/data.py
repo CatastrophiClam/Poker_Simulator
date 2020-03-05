@@ -25,7 +25,7 @@ class StreetRecord:
 @dataclass(frozen=True)
 class RoundRecord:
     street_record: Dict[Street, StreetRecord]
-    dealer: int
+    dealer: PlayerID
     community_cards: List[Card]
     small_blind: int
     big_blind: int
@@ -38,7 +38,7 @@ class RoundRecord:
         object.__setattr__(self, "street_record", {})
         for street in round_info.street_info:
             self.street_record[street] = StreetRecord(round_info.street_info[street])
-        object.__setattr__(self, "dealer", round_info.dealer)
+        object.__setattr__(self, "dealer", round_info.dealer.id)
         object.__setattr__(self, "community_cards", round_info.all_community_cards)
         object.__setattr__(self, "small_blind", round_info.small_blind)
         object.__setattr__(self, "big_blind", round_info.big_blind)

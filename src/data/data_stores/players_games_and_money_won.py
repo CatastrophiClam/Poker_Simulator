@@ -13,7 +13,7 @@ class PlayersGamesAndMoneyWon(NonAccumulativeDataStore):
     def __init__(self, filters: List[BaseFilter]):
         super().__init__(filters)
 
-    def initialize_segment(self, segment):
+    def initialize_segment(self, segment, is_segment_unfiltered_segment=False):
         segment['games_won_no_tie_by_player'] = {}
         segment['games_won_with_tie_by_player'] = {}
         segment['winnings_by_player'] = {}
@@ -37,7 +37,7 @@ class PlayersGamesAndMoneyWon(NonAccumulativeDataStore):
                    games_won_with_tie, segment['games_recorded_in_segment']))
         print()
 
-    def record_segment(self, data_segment, round_record: RoundRecord) -> bool:
+    def record_segment(self, data_segment, is_segment_unfiltered_segment: bool, round_record: RoundRecord) -> bool:
         winners = set()
         max_score = -1
         self.big_blind = round_record.big_blind

@@ -18,14 +18,16 @@ class BaseDataStore(ABC):
 
         for segment in self.data_segments:
             self.initialize_segment(segment)
-        self.initialize_segment(self.unfiltered_segment)
+        self.initialize_segment(self.unfiltered_segment, True)
 
     def record(self, record: RoundRecord) -> bool:
         answer = True
         for i in range(len(self.filters)):
             if self.filters[i].check(record):
-                answer = answer and self.record_segment(self.data_segments[i], record)
-        answer = answer and self.record_segment(self.unfiltered_segment, record)
+                answer = answer and self.record_segment(self.data_segments[i], False, record)
+        answer = answer and self.record_segment(self.unfiltered_segment, True, record)
+
+        # Make sure total games recorded is incremented AFTER all segments have recorded data
         self.total_games_recorded += 1
         return answer
 
@@ -34,12 +36,12 @@ class BaseDataStore(ABC):
 
     # Initialize empty segment
     @abstractmethod
-    def initialize_segment(self, segment):
+    def initialize_segment(self, segment, is_segment_unfiltered_segment=False):
         pass
 
     # Record data from record to a certain segment
     @abstractmethod
-    def record_segment(self, data_segment, record: RoundRecord) -> bool:
+    def record_segment(self, data_segment, is_segment_unfiltered_segment: bool, record: RoundRecord) -> bool:
         pass
 
     @abstractmethod
